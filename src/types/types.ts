@@ -1,0 +1,49 @@
+export type ParamValue = string | number;
+export type QueryParams = Record<string, ParamValue>
+export type Body = any;
+
+type GenericParams = {
+    url: string;
+    headers?: HeadersInit;
+    params?: QueryParams;
+    signal?: AbortSignal;
+};
+
+export type QueryReturnType<T> = Promise<T>;
+
+export type RequestParams = {
+    method?: string,
+    body?: Body,
+} & GenericParams;
+
+export type GetParams = GenericParams;
+
+export type PostParams = {
+    body?: Body,
+} & GenericParams;
+
+export type DeleteParams = {
+    body?: Body,
+} & GenericParams;
+
+export type PutParams = {
+    body?: Body,
+} & GenericParams;
+
+export type PatchParams = {
+    body?: Body,
+} & GenericParams;
+
+export type LeafConfig = {
+    timeout?: number,
+    headers?: HeadersInit,
+    retry?: number,
+    retryDelay?: number
+};
+export interface ILeaf {
+    get: <T = any,>({ url, headers, params }: GetParams) => QueryReturnType<T>;
+    post: <T = any,>({ url, headers, body, params }: PostParams) => QueryReturnType<T>;
+    delete: <T = any,>({ url, headers, body, params }: DeleteParams) => QueryReturnType<T>;
+    put: <T = any,>({ url, headers, body, params }: PutParams) => QueryReturnType<T>;
+    patch: <T = any>({ url, headers, body, params }: PatchParams) => QueryReturnType<T>;
+}
