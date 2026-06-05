@@ -1,4 +1,5 @@
 import {
+    CacheEntry,
     DeleteParams,
     GetParams,
     ILeaf,
@@ -21,20 +22,46 @@ import {
 class Leaf implements ILeaf {
     private readonly baseUrl: string;
     private readonly config: LeafConfig;
+    private readonly cache?: Map<string, CacheEntry>;
 
     constructor(baseUrl?: string, config?: LeafConfig) {
         this.baseUrl = baseUrl ? baseUrl : "";
         this.config = {
             retry: 0,
             retryDelay: 0,
+            cache: false,
+            cacheTime: config?.cacheTime ?? 1000 * 60 * 5,
             ...config
         };
+        if (this.config.cache) {
+            this.cache = new Map<string, CacheEntry>();
+        }
     }
 
     private createTimeoutSignal(timeout: number) {
         const controller = new AbortController();
-        setTimeout(() => controller.abort("TIMEOUT"), timeout);
+        setTimeout(() => controller.abort("TIMEOUT"), timeout); //fix
         return controller.signal;
+    }
+
+    private useCache(method: string, fullUrl: string): { shouldCache: boolean, cacheHit: boolean } {
+        if (!this.config.cache || !this.config.cacheTime || !this.cache) return { shouldCache: false, cacheHit: false };
+
+        if (method !== "GET") {
+            this.cache.clear();
+            return { shouldCache: false, cacheHit: false };
+        }
+
+        if (this.cache.has(fullUrl) && Date.now() - this.cache.get(fullUrl)!.time <= this.config.cacheTime) {
+            this.cache.delete(fullUrl);
+            return { shouldCache: false, cacheHit: true };
+        }
+
+        return { shouldCache: true, cacheHit: false };
+    }
+
+    private buildUrl(baseUrl: string, url: string, queryParams: string) {
+        return baseUrl + url + queryParams;
     }
 
     private async request<T>({ url, method="GET", headers, body, params, signal }: RequestParams): QueryReturnType<T> {
@@ -50,7 +77,15 @@ class Leaf implements ILeaf {
             combinedSignal = mergeSignals([timeoutSignal, signal]);
         }
 
-        return fetch(this.baseUrl + url + queryParams, {
+        const fullUrl = this.buildUrl(this.baseUrl, url, queryParams);
+
+        const cacheState = this.useCache(method, fullUrl);
+
+        if (cacheState.cacheHit) {
+            return this.cache!.get(fullUrl)!.data as T;
+        }
+
+        const data = await fetch(fullUrl, {
             method: method,
             headers: {
                 ...this.config.headers,
@@ -63,6 +98,15 @@ class Leaf implements ILeaf {
             signal: combinedSignal ?? timeoutSignal ?? signal,
         })
             .then((response) => getResponseData<T>(response));
+
+        if (cacheState.shouldCache) {
+            this.cache!.set(fullUrl, {
+                time: Date.now(),
+                data
+            });
+        }
+
+        return data;
     }
 
     private async requestWithRetry<T>({ url, method="GET", headers, body, params, signal }: RequestParams): QueryReturnType<T> {
@@ -75,7 +119,7 @@ class Leaf implements ILeaf {
             }
             catch (e) {
                 lastError = e;
-                if (!shouldRetry(e, signal)) {
+                if (!shouldRetry(e as Error, signal)) {
                     throw lastError;
                 }
                 await sleep((this.config.retryDelay! * 2**i) + Math.random() * 10);
@@ -87,10 +131,9 @@ class Leaf implements ILeaf {
 
     async get<T = any>({ url, headers, params, signal }: GetParams): QueryReturnType<T> {
         const method = "GET";
-        if (this.config.retry) {
-            return this.requestWithRetry({ url, headers, params, method, signal });
-        }
-        return this.request({ url, headers, params, method, signal });
+        return this.config.retry
+            ? this.requestWithRetry({ url, headers, params, method, signal })
+            : this.request({ url, headers, params, method, signal });
     }
 
     async post<T = any>({ url, headers, body, params, signal }: PostParams): QueryReturnType<T> {

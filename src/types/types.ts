@@ -11,6 +11,11 @@ type GenericParams = {
 
 export type QueryReturnType<T> = Promise<T>;
 
+export type CacheEntry = {
+    data: any,
+    time: number,
+};
+
 export type RequestParams = {
     method?: string,
     body?: Body,
@@ -39,6 +44,8 @@ export type LeafConfig = {
     headers?: HeadersInit,
     retry?: number,
     retryDelay?: number
+    cache?: boolean
+    cacheTime?: number,
 };
 export interface ILeaf {
     get: <T = any,>({ url, headers, params }: GetParams) => QueryReturnType<T>;
