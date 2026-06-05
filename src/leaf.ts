@@ -23,6 +23,7 @@ class Leaf implements ILeaf {
     private readonly baseUrl: string;
     private readonly config: LeafConfig;
     private readonly cache?: Map<string, CacheEntry>;
+    private readonly pendingRequests: Map<string, Promise<any>>;
 
     constructor(baseUrl?: string, config?: LeafConfig) {
         this.baseUrl = baseUrl ? baseUrl : "";
@@ -36,6 +37,7 @@ class Leaf implements ILeaf {
         if (this.config.cache) {
             this.cache = new Map<string, CacheEntry>();
         }
+        this.pendingRequests = new Map<string, Promise<any>>();
     }
 
     private createTimeoutSignal(timeout: number): [AbortSignal, number] {
@@ -52,9 +54,15 @@ class Leaf implements ILeaf {
             return { shouldCache: false, cacheHit: false };
         }
 
-        if (this.cache.has(fullUrl) && Date.now() - this.cache.get(fullUrl)!.time <= this.config.cacheTime) {
+        if (this.cache.has(fullUrl)) {
+            const entry = this.cache.get(fullUrl);
+            const isValid = Date.now() - entry!.time <= this.config.cacheTime;
+
+            if (isValid) {
+                return { shouldCache: false, cacheHit: true };
+            }
+
             this.cache.delete(fullUrl);
-            return { shouldCache: false, cacheHit: true };
         }
 
         return { shouldCache: true, cacheHit: false };
@@ -66,6 +74,15 @@ class Leaf implements ILeaf {
         }
 
         return [undefined, undefined] as const;
+    }
+
+    private requestCleanup(fullUrl: string, timeoutTimer?: number) {
+        if (this.pendingRequests.has(fullUrl)) {
+            this.pendingRequests.delete(fullUrl);
+        }
+        if (timeoutTimer) {
+            clearTimeout(timeoutTimer);
+        }
     }
 
     private buildUrl(baseUrl: string, url: string, queryParams: string) {
@@ -90,7 +107,11 @@ class Leaf implements ILeaf {
             return this.cache!.get(fullUrl)!.data as T;
         }
 
-        const data = await fetch(fullUrl, {
+        if (method === "GET" && this.pendingRequests.has(fullUrl)) {
+            return this.pendingRequests.get(fullUrl);
+        }
+
+        const requestPromise = fetch(fullUrl, {
             method: method,
             headers: {
                 ...this.config.headers,
@@ -102,10 +123,17 @@ class Leaf implements ILeaf {
             body: body ? body instanceof FormData ? body : JSON.stringify(body) : undefined,
             signal: combinedSignal ?? timeoutSignal ?? signal,
         })
-            .then((response) => getResponseData<T>(response))
-            .finally(() => {
-                clearTimeout(timeoutTimer);
-            });
+            .then((response) => getResponseData<T>(response));
+
+        if (method === "GET") {
+            this.pendingRequests.set(fullUrl, requestPromise);
+        }
+
+        requestPromise.finally(() => {
+            this.requestCleanup(fullUrl, timeoutTimer);
+        });
+
+        const data = await requestPromise;
 
         if (cacheState.shouldCache) {
             this.cache!.set(fullUrl, {
