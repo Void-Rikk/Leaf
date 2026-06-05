@@ -38,10 +38,10 @@ class Leaf implements ILeaf {
         }
     }
 
-    private createTimeoutSignal(timeout: number) {
+    private createTimeoutSignal(timeout: number): [AbortSignal, number] {
         const controller = new AbortController();
-        setTimeout(() => controller.abort("TIMEOUT"), timeout); //fix
-        return controller.signal;
+        const timer = setTimeout(() => controller.abort("TIMEOUT"), timeout);
+        return [controller.signal, timer];
     }
 
     private useCache(method: string, fullUrl: string): { shouldCache: boolean, cacheHit: boolean } {
@@ -60,18 +60,23 @@ class Leaf implements ILeaf {
         return { shouldCache: true, cacheHit: false };
     }
 
+    private useTimeout() {
+        if (this.config.timeout) {
+            return this.createTimeoutSignal(this.config.timeout);
+        }
+
+        return [undefined, undefined] as const;
+    }
+
     private buildUrl(baseUrl: string, url: string, queryParams: string) {
         return baseUrl + url + queryParams;
     }
 
     private async request<T>({ url, method="GET", headers, body, params, signal }: RequestParams): QueryReturnType<T> {
         const queryParams = constructQueryParams(params);
-        let timeoutSignal;
         let combinedSignal;
 
-        if (this.config.timeout) {
-            timeoutSignal = this.createTimeoutSignal(this.config.timeout);
-        }
+        const [timeoutSignal, timeoutTimer] = this.useTimeout();
 
         if (timeoutSignal && signal) {
             combinedSignal = mergeSignals([timeoutSignal, signal]);
@@ -97,7 +102,10 @@ class Leaf implements ILeaf {
             body: body ? body instanceof FormData ? body : JSON.stringify(body) : undefined,
             signal: combinedSignal ?? timeoutSignal ?? signal,
         })
-            .then((response) => getResponseData<T>(response));
+            .then((response) => getResponseData<T>(response))
+            .finally(() => {
+                clearTimeout(timeoutTimer);
+            });
 
         if (cacheState.shouldCache) {
             this.cache!.set(fullUrl, {
