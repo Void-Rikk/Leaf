@@ -89,6 +89,21 @@ class Leaf implements ILeaf {
         return baseUrl + url + queryParams;
     }
 
+    private shouldStringifyBody(body: unknown): boolean {
+        if (
+            typeof body === "object" &&
+            body !== null &&
+            !(body instanceof FormData) &&
+            !(body instanceof Blob) &&
+            !(body instanceof ArrayBuffer) &&
+            !(body instanceof URLSearchParams)
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
     private async request<T>({ url, method="GET", headers, body, params, signal }: RequestParams): QueryReturnType<T> {
         const queryParams = constructQueryParams(params);
         let combinedSignal;
@@ -111,16 +126,18 @@ class Leaf implements ILeaf {
             return this.pendingRequests.get(fullUrl);
         }
 
+        const stringifyBody = this.shouldStringifyBody(body);
+
         const requestPromise = fetch(fullUrl, {
             method: method,
             headers: {
                 ...this.config.headers,
                 ...headers,
-                ...(body && !(body instanceof FormData) && {
+                ...(stringifyBody && {
                     "Content-Type": "application/json"
                 }),
             },
-            body: body ? body instanceof FormData ? body : JSON.stringify(body) : undefined,
+            body: stringifyBody ? JSON.stringify(body) : body,
             signal: combinedSignal ?? timeoutSignal ?? signal,
         })
             .then((response) => getResponseData<T>(response));
