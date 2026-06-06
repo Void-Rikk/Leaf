@@ -18,11 +18,14 @@ export function getResponseData<T = any>(response: Response): T {
 
     const contentType = response.headers.get("content-type");
 
-    if (contentType?.includes("application/json")) {
+    if (contentType?.includes("json")) {
         return response.json() as T;
     }
+    else if (contentType?.includes("text")) {
+        return response.text() as T;
+    }
 
-    return response.text() as unknown as T;
+    return response.blob() as T;
 }
 
 export function constructQueryParams(params?: QueryParams): string {
