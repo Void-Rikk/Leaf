@@ -13,17 +13,17 @@
 ## Installation
 
 ```bash
-    npm install @vrikk/leaf
+npm install @vrikk/leaf
 ```
 
 ## Basic usage
 
 ```javascript
-    import Leaf from 'leaf';
-    
-    const leaf = new Leaf("https://example.com");
-    
-    const data = await leaf.get("/users");
+import Leaf from 'leaf';
 
-    console.log(data);
+const leaf = new Leaf("https://example.com");
+    
+const data = await leaf.get("/users");
+
+console.log(data);
 ```
