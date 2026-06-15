@@ -40,12 +40,6 @@ class Leaf implements ILeaf {
         this.pendingRequests = new Map<string, Promise<any>>();
     }
 
-    private createTimeoutSignal(timeout: number): [AbortSignal, number] {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort("TIMEOUT"), timeout);
-        return [controller.signal, timer];
-    }
-
     private useCache(method: string, fullUrl: string): { shouldCache: boolean, cacheHit: boolean } {
         if (!this.config.cache || !this.config.cacheTime || !this.cache) return { shouldCache: false, cacheHit: false };
 
@@ -68,6 +62,12 @@ class Leaf implements ILeaf {
         return { shouldCache: true, cacheHit: false };
     }
 
+    private createTimeoutSignal(timeout: number): [AbortSignal, NodeJS.Timeout] {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort("TIMEOUT"), timeout);
+        return [controller.signal, timer];
+    }
+
     private useTimeout() {
         if (this.config.timeout) {
             return this.createTimeoutSignal(this.config.timeout);
@@ -76,7 +76,7 @@ class Leaf implements ILeaf {
         return [undefined, undefined] as const;
     }
 
-    private requestCleanup(fullUrl: string, timeoutTimer?: number) {
+    private requestCleanup(fullUrl: string, timeoutTimer?: NodeJS.Timeout) {
         if (this.pendingRequests.has(fullUrl)) {
             this.pendingRequests.delete(fullUrl);
         }
@@ -123,43 +123,47 @@ class Leaf implements ILeaf {
         }
 
         if (method === "GET" && this.pendingRequests.has(fullUrl)) {
-            return this.pendingRequests.get(fullUrl);
+            return this.pendingRequests.get(fullUrl)!;
         }
 
         const stringifyBody = this.shouldStringifyBody(body);
 
-        const requestPromise = fetch(fullUrl, {
-            method: method,
-            headers: {
-                ...this.config.headers,
-                ...headers,
-                ...(stringifyBody && {
-                    "Content-Type": "application/json"
-                }),
-            },
-            body: stringifyBody ? JSON.stringify(body) : body,
-            signal: combinedSignal ?? timeoutSignal ?? signal,
-        })
-            .then((response) => getResponseData<T>(response));
+        const requestPromise = (async () => {
+            const response = await fetch(fullUrl, {
+                method: method,
+                headers: {
+                    ...this.config.headers,
+                    ...headers,
+                    ...(stringifyBody && {
+                        "Content-Type": "application/json"
+                    }),
+                },
+                body: stringifyBody ? JSON.stringify(body) : body,
+                signal: combinedSignal ?? timeoutSignal ?? signal,
+            });
+
+            return getResponseData<T>(response);
+        })();
 
         if (method === "GET") {
             this.pendingRequests.set(fullUrl, requestPromise);
         }
 
-        requestPromise.finally(() => {
-            this.requestCleanup(fullUrl, timeoutTimer);
-        });
+        try {
+            const data = await requestPromise;
 
-        const data = await requestPromise;
+            if (cacheState.shouldCache) {
+                this.cache!.set(fullUrl, {
+                    time: Date.now(),
+                    data
+                });
+            }
 
-        if (cacheState.shouldCache) {
-            this.cache!.set(fullUrl, {
-                time: Date.now(),
-                data
-            });
+            return data;
         }
-
-        return data;
+        finally {
+            this.requestCleanup(fullUrl, timeoutTimer);
+        }
     }
 
     private async requestWithRetry<T>({ url, method="GET", headers, body, params, signal }: RequestParams): QueryReturnType<T> {
