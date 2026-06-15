@@ -9,23 +9,23 @@ export class LeafResponseError extends Error {
     }
 }
 
-export function getResponseData<T = any>(response: Response): T {
+export function getResponseData<T = any>(response: Response): Promise<T> {
     if (!response.ok) {
         throw new LeafResponseError(`Error: ${response.status} ${response.statusText}`, response.status)
     }
 
-    if (response.status === 204) return null as T;
+    if (response.status === 204) return Promise.resolve(null) as Promise<T>;
 
     const contentType = response.headers.get("content-type");
 
     if (contentType?.includes("json")) {
-        return response.json() as T;
+        return response.json();
     }
     else if (contentType?.includes("text")) {
-        return response.text() as T;
+        return response.text() as Promise<T>;
     }
 
-    return response.blob() as T;
+    return response.blob() as Promise<T>;
 }
 
 export function constructQueryParams(params?: QueryParams): string {
