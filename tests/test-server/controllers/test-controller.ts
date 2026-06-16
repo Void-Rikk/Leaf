@@ -3,10 +3,8 @@ import express from "express";
 
 class TestController {
 
-    async test(req: express.Request, res: express.Response) {
+    private async test(req: express.Request, res: express.Response) {
         const { timeout, responseStatus, err } = req.query;
-
-        console.log(timeout, responseStatus, err);
 
         await this.#sleep(Number(timeout));
 
@@ -15,6 +13,26 @@ class TestController {
         }
 
         return res.status(Number(responseStatus)).json({ data: 123 });
+    }
+
+    async testGET(req: express.Request, res: express.Response) {
+        return this.test(req, res);
+    }
+
+    async testPOST(req: express.Request, res: express.Response) {
+        return this.test(req, res);
+    }
+
+    async testPUT(req: express.Request, res: express.Response) {
+        return this.test(req, res);
+    }
+
+    async testPATCH(req: express.Request, res: express.Response) {
+        return this.test(req, res);
+    }
+
+    async testDELETE(req: express.Request, res: express.Response) {
+        return this.test(req, res);
     }
 
     async #sleep(delay: number) {
