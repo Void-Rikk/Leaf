@@ -48,9 +48,9 @@ export type LeafConfig = {
     cacheTime?: number,
 };
 export interface ILeaf {
-    get: <T = any,>({ url, headers, params }: GetParams) => QueryReturnType<T>;
-    post: <T = any,>({ url, headers, body, params }: PostParams) => QueryReturnType<T>;
-    delete: <T = any,>({ url, headers, body, params }: DeleteParams) => QueryReturnType<T>;
-    put: <T = any,>({ url, headers, body, params }: PutParams) => QueryReturnType<T>;
-    patch: <T = any>({ url, headers, body, params }: PatchParams) => QueryReturnType<T>;
+    get: <T = unknown,>({ url, headers, params }: GetParams) => QueryReturnType<T>;
+    post: <T = unknown,>({ url, headers, body, params }: PostParams) => QueryReturnType<T>;
+    delete: <T = unknown,>({ url, headers, body, params }: DeleteParams) => QueryReturnType<T>;
+    put: <T = unknown,>({ url, headers, body, params }: PutParams) => QueryReturnType<T>;
+    patch: <T = unknown,>({ url, headers, body, params }: PatchParams) => QueryReturnType<T>;
 }
