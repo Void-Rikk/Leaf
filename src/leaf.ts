@@ -186,35 +186,35 @@ class Leaf implements ILeaf {
         throw lastError;
     }
 
-    async get<T = any>({ url, headers, params, signal }: GetParams): QueryReturnType<T> {
+    async get<T = unknown>({ url, headers, params, signal }: GetParams): QueryReturnType<T> {
         const method = "GET";
         return this.config.retry
             ? this.requestWithRetry({ url, headers, params, method, signal })
             : this.request({ url, headers, params, method, signal });
     }
 
-    async post<T = any>({ url, headers, body, params, signal }: PostParams): QueryReturnType<T> {
+    async post<T = unknown>({ url, headers, body, params, signal }: PostParams): QueryReturnType<T> {
         const method = "POST";
         return this.config.retry
             ? this.requestWithRetry({ url, headers, body, params, method, signal })
             : this.request({ url, headers, body, params, method, signal });
     }
 
-    async put<T = any>({ url, headers, body, params, signal }: PutParams): QueryReturnType<T> {
+    async put<T = unknown>({ url, headers, body, params, signal }: PutParams): QueryReturnType<T> {
         const method = "PUT";
         return this.config.retry
             ? this.requestWithRetry({ url, headers, body, params, method, signal })
             : this.request({ url, headers, body, params, method, signal });
     }
 
-    async patch<T = any>({ url, headers, body, params, signal }: PatchParams): QueryReturnType<T> {
+    async patch<T = unknown>({ url, headers, body, params, signal }: PatchParams): QueryReturnType<T> {
         const method = "PATCH";
         return this.config.retry
             ? this.requestWithRetry({ url, headers, body, params, method, signal })
             : this.request({ url, headers, body, params, method, signal });
     }
 
-    async delete<T = any>({ url, headers, body, params, signal }: DeleteParams): QueryReturnType<T> {
+    async delete<T = unknown>({ url, headers, body, params, signal }: DeleteParams): QueryReturnType<T> {
         const method = "DELETE";
         return this.config.retry
             ? this.requestWithRetry({ url, headers, body, method, params, signal })

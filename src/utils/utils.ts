@@ -9,7 +9,7 @@ export class LeafResponseError extends Error {
     }
 }
 
-export function getResponseData<T = any>(response: Response): Promise<T> {
+export function getResponseData<T = unknown>(response: Response): Promise<T> {
     if (!response.ok) {
         throw new LeafResponseError(`Error: ${response.status} ${response.statusText}`, response.status)
     }
