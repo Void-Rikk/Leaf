@@ -4,7 +4,7 @@ import express from "express";
 class TestController {
 
     private async test(req: express.Request, res: express.Response) {
-        const { timeout, responseStatus, err } = req.query;
+        const { timeout, responseStatus, err, returnType } = req.query;
 
         await this.#sleep(Number(timeout));
 
@@ -12,7 +12,22 @@ class TestController {
             return res.status(Number(responseStatus)).json({ error: "Error" });
         }
 
-        return res.status(Number(responseStatus)).json({ data: 123 });
+        if (returnType === "json") {
+            return res.status(Number(responseStatus)).json({ data: 123 });
+        }
+        else if (returnType === "text") {
+            return res.status(Number(responseStatus)).send("plain text");
+        }
+        else if (returnType === "blob") {
+            const blob = new Blob(["blobik"]);
+            res.type(blob.type)
+            blob.arrayBuffer().then((buf) => {
+                res.send(Buffer.from(buf))
+            });
+        }
+        else {
+            return res.status(Number(responseStatus)).json({ data: 123 });
+        }
     }
 
     async testGET(req: express.Request, res: express.Response) {

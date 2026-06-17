@@ -10,6 +10,7 @@ const defaultServerSettings: ServerSettings = {
     timeout: 100,
     responseStatus: 200,
     err: 0,
+    returnType: "json"
 };
 
 globalThis.fetch = vi.fn(fetch);
@@ -62,6 +63,61 @@ describe("basic leaf", () => {
 
         await expect(requestPromise).rejects.toThrow(/abort/i);
     });
+
+    it('should combine headers correctly', async () => {
+        const leaf = new Leaf(baseUrl, {
+            headers: {
+                "Authorization": "Bearer 8ugfh5dihg",
+                "Test-Header": "content"
+            }
+        });
+        const params = { ...defaultServerSettings };
+
+        await expect(leaf.get({
+            url: "/test",
+            params,
+            headers: {
+                "Test-Header": "new-content",
+                "New-Header": "even-new-content"
+            }
+        })).resolves.toEqual(mockData);
+
+        expect(fetch).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer 8ugfh5dihg",
+                    "Test-Header": "new-content",
+                    "New-Header": "even-new-content"
+                },
+            })
+        );
+    });
+
+    it('should contain null data on 204 status', async () => {
+        const leaf = new Leaf(baseUrl);
+        const params = { ...defaultServerSettings, responseStatus: 204 };
+
+        await expect(leaf.get({ url: "/test", params })).resolves.toBe(null);
+    });
+
+    it('should correctly parse various data from response body', async () => {
+        const leaf = new Leaf(baseUrl);
+        const params = { ...defaultServerSettings };
+
+        await expect(leaf.get({ url: "/test", params })).resolves.toEqual(mockData);
+
+        await expect(leaf.get({
+            url: "/test",
+            params: { ...params, returnType: "text" }
+        })).resolves.toBeTypeOf("string");
+
+        await expect(leaf.get({
+            url: "/test",
+            params: { ...params, returnType: "blob" }
+        })).resolves.toBeInstanceOf(Blob);
+    });
 });
 
 describe("leaf deduplication", () => {
@@ -91,7 +147,7 @@ describe("leaf deduplication", () => {
         const params = { ...defaultServerSettings, timeout: 10 };
 
         let expectedDataArr = [mockData, mockData, mockData];
-        let dataArr: Promise<unknown>[];
+        let dataArr: unknown[];
 
         const post = () => leaf.post({ url: "/test", params });
         const put = () => leaf.put({ url: "/test", params });
@@ -108,6 +164,17 @@ describe("leaf deduplication", () => {
         expect(dataArr).toEqual(expectedDataArr);
 
         expect(fetch).toHaveBeenCalledTimes(12);
+    });
+
+    it('should not be deduplicated after cleanup', async () => {
+        const leaf = new Leaf(baseUrl);
+        const params = { ...defaultServerSettings };
+
+        await expect(leaf.get({ url: "/test", params })).resolves.toEqual(mockData);
+
+        await expect(leaf.get({ url: "/test", params })).resolves.toEqual(mockData);
+
+        expect(fetch).toHaveBeenCalledTimes(2);
     });
 });
 
@@ -219,5 +286,19 @@ describe("leaf caching", () => {
         await expect(dlt()).resolves.toEqual(mockData);
 
         expect(fetch).toHaveBeenCalledTimes(8);
+    });
+
+    it('should use cache after deduplication', async () => {
+        const leaf = new Leaf(baseUrl, {
+            cache: true
+        });
+        const params = { ...defaultServerSettings };
+        const get = () => leaf.get({ url: "/test", params });
+
+        await expect(Promise.all([get(), get()])).resolves.toEqual([mockData, mockData]);
+        expect(fetch).toHaveBeenCalledTimes(1);
+
+        await expect(get()).resolves.toEqual(mockData);
+        expect(fetch).toHaveBeenCalledTimes(1);
     });
 });
