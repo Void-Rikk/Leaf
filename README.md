@@ -16,13 +16,13 @@ All of this with minimal configuration and a simple API.
 ## Installation
 
 ```bash
-npm install @vrikk/leaf
+npm install @void-rikk/leaf
 ```
 
 ## Basic usage
 
 ```javascript
-import Leaf from '@vrikk/leaf';
+import Leaf from '@void-rikk/leaf';
 
 const leaf = new Leaf("https://example.com");
     
@@ -128,7 +128,7 @@ Type: `AbortSignal`
 ### Retry configuration example
 
 ```javascript
-import Leaf from '@vrikk/leaf';
+import Leaf from '@void-rikk/leaf';
 
 const leaf = new Leaf("https://example.com", {
     retry: 3,
@@ -139,7 +139,7 @@ const leaf = new Leaf("https://example.com", {
 ### Cache example
 
 ```javascript
-import Leaf from '@vrikk/leaf';
+import Leaf from '@void-rikk/leaf';
 
 const leaf = new Leaf("https://example.com", {
     cache: true,
@@ -150,7 +150,7 @@ const leaf = new Leaf("https://example.com", {
 ### Timeout example
 
 ```javascript
-import Leaf from '@vrikk/leaf';
+import Leaf from '@void-rikk/leaf';
 
 const leaf = new Leaf("https://example.com", {
     timeout: 5000

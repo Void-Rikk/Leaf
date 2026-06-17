@@ -1,10 +1,33 @@
 {
-  "name": "leaf",
+  "name": "@void-rikk/leaf",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "description": "Lightweight fetch wrapper with cache, retry and deduplication",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "license": "MIT",
+  "keywords": [
+    "fetch",
+    "http",
+    "api",
+    "client",
+    "cache",
+    "retry",
+    "deduplication"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "test-server": "nodemon tests/test-server/test-server.ts",
     "test": "vitest"
   },
@@ -15,9 +38,10 @@
     "express": "^5.2.1",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
     "typescript": "^5.5.3",
     "vite": "^8.0.16",
     "vitest": "^4.1.8"
   },
-  "private": true
+  "private": false
 }

@@ -62,7 +62,7 @@ class Leaf implements ILeaf {
         return { shouldCache: true, cacheHit: false };
     }
 
-    private createTimeoutSignal(timeout: number): [AbortSignal, NodeJS.Timeout] {
+    private createTimeoutSignal(timeout: number): [AbortSignal, ReturnType<typeof setTimeout>] {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort("TIMEOUT"), timeout);
         return [controller.signal, timer];
@@ -76,7 +76,7 @@ class Leaf implements ILeaf {
         return [undefined, undefined] as const;
     }
 
-    private requestCleanup(fullUrl: string, timeoutTimer?: NodeJS.Timeout) {
+    private requestCleanup(fullUrl: string, timeoutTimer?: ReturnType<typeof setTimeout>) {
         if (this.pendingRequests.has(fullUrl)) {
             this.pendingRequests.delete(fullUrl);
         }
