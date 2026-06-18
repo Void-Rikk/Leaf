@@ -1,6 +1,6 @@
 {
   "name": "@void-rikk/leaf",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Lightweight fetch wrapper with cache, retry and deduplication",
   "repository": "Void-Rikk/Leaf",
   "homepage": "https://github.com/Void-Rikk/Leaf#readme",
