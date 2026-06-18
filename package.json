@@ -1,6 +1,6 @@
 {
   "name": "@void-rikk/leaf",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Lightweight fetch wrapper with cache, retry and deduplication",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
