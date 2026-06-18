@@ -171,7 +171,7 @@ class Leaf implements ILeaf {
 
         for (let i = 0; i <= this.config.retry!; i++) {
             try {
-                const data = await this.request({ url, method, headers, body, params, signal });
+                const data = await this.request<T>({ url, method, headers, body, params, signal });
                 return data as T;
             }
             catch (e) {
@@ -189,36 +189,36 @@ class Leaf implements ILeaf {
     async get<T = unknown>({ url, headers, params, signal }: GetParams): QueryReturnType<T> {
         const method = "GET";
         return this.config.retry
-            ? this.requestWithRetry({ url, headers, params, method, signal })
-            : this.request({ url, headers, params, method, signal });
+            ? this.requestWithRetry<T>({ url, headers, params, method, signal })
+            : this.request<T>({ url, headers, params, method, signal });
     }
 
     async post<T = unknown>({ url, headers, body, params, signal }: PostParams): QueryReturnType<T> {
         const method = "POST";
         return this.config.retry
-            ? this.requestWithRetry({ url, headers, body, params, method, signal })
-            : this.request({ url, headers, body, params, method, signal });
+            ? this.requestWithRetry<T>({ url, headers, body, params, method, signal })
+            : this.request<T>({ url, headers, body, params, method, signal });
     }
 
     async put<T = unknown>({ url, headers, body, params, signal }: PutParams): QueryReturnType<T> {
         const method = "PUT";
         return this.config.retry
-            ? this.requestWithRetry({ url, headers, body, params, method, signal })
-            : this.request({ url, headers, body, params, method, signal });
+            ? this.requestWithRetry<T>({ url, headers, body, params, method, signal })
+            : this.request<T>({ url, headers, body, params, method, signal });
     }
 
     async patch<T = unknown>({ url, headers, body, params, signal }: PatchParams): QueryReturnType<T> {
         const method = "PATCH";
         return this.config.retry
-            ? this.requestWithRetry({ url, headers, body, params, method, signal })
-            : this.request({ url, headers, body, params, method, signal });
+            ? this.requestWithRetry<T>({ url, headers, body, params, method, signal })
+            : this.request<T>({ url, headers, body, params, method, signal });
     }
 
     async delete<T = unknown>({ url, headers, body, params, signal }: DeleteParams): QueryReturnType<T> {
         const method = "DELETE";
         return this.config.retry
-            ? this.requestWithRetry({ url, headers, body, method, params, signal })
-            : this.request({ url, headers, body, params, method, signal });
+            ? this.requestWithRetry<T>({ url, headers, body, method, params, signal })
+            : this.request<T>({ url, headers, body, params, method, signal });
     }
 }
 
