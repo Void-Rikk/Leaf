@@ -1,6 +1,9 @@
-![Leaf](/leaf.png)
+![Leaf](https://raw.githubusercontent.com/Void-Rikk/Leaf/main/leaf.png)
 
 >Leaf is a lightweight beginner-friendly fetching tool based on Fetch API
+
+![npm](https://img.shields.io/npm/v/@void-rikk/leaf)
+![license](https://img.shields.io/npm/l/@void-rikk/leaf)
 
 ## Why Leaf?
 

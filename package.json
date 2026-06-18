@@ -2,6 +2,8 @@
   "name": "@void-rikk/leaf",
   "version": "1.0.2",
   "description": "Lightweight fetch wrapper with cache, retry and deduplication",
+  "repository": "Void-Rikk/Leaf",
+  "homepage": "https://github.com/Void-Rikk/Leaf#readme",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
